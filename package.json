@@ -1,0 +1,44 @@
+{
+  "name": "weather-x402",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real x402-gated aviation METAR lookup over REST, settled on Stellar testnet — built to joint-test the AgentSmith Stellar Facilitator.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json && npm run check:examples && npm run build:browser",
+    "build:browser": "esbuild browser/wallet-test.js --bundle --format=esm --platform=browser --target=es2022 --outfile=public/wallet-test.bundle.js",
+    "check:examples": "node --check examples/browser-buyer.js",
+    "start": "node dist/src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "register": "tsx scripts/register.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@x402/core": "^2.23.0",
+    "@x402/express": "^2.23.0",
+    "@x402/extensions": "^2.23.0",
+    "@x402/stellar": "^2.23.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@stellar/freighter-api": "^6.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "@types/supertest": "^6.0.3",
+    "esbuild": "^0.28.2",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
