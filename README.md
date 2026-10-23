@@ -19,13 +19,13 @@ Facilitator. It connects to the hosted service through `X402_FACILITATOR_URL`.
 
 ## AgentSmith Facilitator
 
-- **Facilitator URL:** <https://agentsmith.xyz/facilitator>
+- **Facilitator URL:** <https://testnet.agentsmith.xyz/facilitator>
 - **Documentation:** [AgentSmith Facilitator Quickstart](https://agentsmith.xyz/docs.html#quickstart)
 
 ## What you need
 
 - Node.js >= 22
-- Access to the AgentSmith Facilitator (`https://agentsmith.xyz/facilitator`)
+- Access to the AgentSmith Facilitator (`https://testnet.agentsmith.xyz/facilitator`)
 - A Freighter wallet (browser extension) switched to **Testnet** — the Buyer signs with it
 - Testnet USDC in the buyer wallet, from the Circle faucet (below)
 
@@ -45,7 +45,7 @@ npm run dev               # http://127.0.0.1:8408
 The example configuration is already pointed at the hosted **AgentSmith Facilitator**:
 
 ```dotenv
-X402_FACILITATOR_URL=https://agentsmith.xyz/facilitator
+X402_FACILITATOR_URL=https://testnet.agentsmith.xyz/facilitator
 ```
 
 On startup the service calls the AgentSmith Facilitator's `/supported` endpoint, learns
