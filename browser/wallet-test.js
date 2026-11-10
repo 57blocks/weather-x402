@@ -1,5 +1,5 @@
 /**
- * Browser entry for the Freighter wallet test harness.
+ * Browser entry for the Varial wallet test harness.
  *
  * Bundled by `npm run build:browser` into public/wallet-test.bundle.js. It is
  * bundled rather than loaded from a CDN on purpose: esm.sh's CJS->ESM shim
@@ -11,8 +11,8 @@
  */
 import {
   isConnected,
-} from '@stellar/freighter-api';
-import { createFreighterSigner } from './freighter-signer.js';
+} from '@stellar/varial-sdk';
+import { createVarialSigner } from './varial-signer.js';
 import { payForResource } from './x402-payment.js';
 
 const $ = (id) => document.getElementById(id);
@@ -122,22 +122,22 @@ $('connect').addEventListener('click', async () => {
   const connectButton = $('connect');
   connectButton.disabled = true;
   try {
-    log('Checking for the Freighter extension…');
+    log('Checking for the Varial extension…');
     const connection = await isConnected();
     if (connection.error) throw new Error(`isConnected: ${connection.error.message || connection.error}`);
     if (!connection.isConnected) {
-      statusEl.textContent = 'Freighter not detected.';
-      log('Freighter is not installed / not detected in this browser.', 'err');
+      statusEl.textContent = 'Varial not detected.';
+      log('Varial is not installed / not detected in this browser.', 'err');
       return;
     }
 
-    log('Requesting access — approve the Freighter popup…');
-    const connected = await createFreighterSigner();
+    log('Requesting access — approve the Varial popup…');
+    const connected = await createVarialSigner();
     signer = connected.signer;
-    log(`Freighter network: ${connected.network.network} (${connected.network.networkPassphrase})`);
+    log(`Varial network: ${connected.network.network} (${connected.network.networkPassphrase})`);
     statusEl.textContent = `Connected: ${signer.address}`;
     statusEl.classList.add('connected');
-    connectButton.textContent = '✓ Freighter connected';
+    connectButton.textContent = '✓ Varial connected';
     connectButton.classList.add('connected');
     log(`Connected as ${signer.address}`, 'ok');
     $('run').disabled = false;
@@ -178,12 +178,12 @@ $('run').addEventListener('click', async () => {
           requirements = detail.requirements;
           log(`Selected ${requirements.scheme}: ${requirements.network}, ${requirements.amount} of ${requirements.asset} -> ${requirements.payTo}`);
           renderPayment(requirements);
-          if (!signer) throw new Error('Connect Freighter first (step 1)');
+          if (!signer) throw new Error('Connect Varial first (step 1)');
         } else if (event === 'signing') {
           if (requirements.scheme === 'upto') {
-            log(`Building Kernel authorization for up to ${requirements.amount} atomic units, then asking Freighter to sign…`);
+            log(`Building Kernel authorization for up to ${requirements.amount} atomic units, then asking Varial to sign…`);
           } else {
-            log('Building and simulating the exact transfer, then asking Freighter to sign the auth entry…');
+            log('Building and simulating the exact transfer, then asking Varial to sign the auth entry…');
           }
         } else if (event === 'signed') {
           log('Signed. Retrying with PAYMENT-SIGNATURE…', 'ok');
@@ -220,4 +220,4 @@ $('run').addEventListener('click', async () => {
   }
 });
 
-log('Ready. Connect Freighter to begin.');
+log('Ready. Connect Varial to begin.');

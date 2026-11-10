@@ -11,7 +11,7 @@ import {
 } from '@x402/stellar';
 
 type KernelClient = {
-  settle_with_approval(args: {
+  settle(args: {
     terms: {
       payer: string;
       asset: string;
@@ -83,7 +83,7 @@ export class UptoStellarClient implements SchemeNetworkClient {
       // The Facilitator sources the envelope; the Buyer signs only the Kernel authorization.
       publicKey: extra.facilitator,
     });
-    const tx = await client.settle_with_approval({
+    const tx = await client.settle({
       terms: {
         payer: this.signer.address,
         asset: requirements.asset,

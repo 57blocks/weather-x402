@@ -5,7 +5,7 @@ both sides of a real x402-gated resource request so you can read them independen
 
 - **Seller** — a real REST weather service that answers `402 Payment Required`,
   then asks the **AgentSmith Facilitator** to verify and settle the payment.
-- **Buyer** — a browser page that connects a **Freighter wallet**, signs the Soroban
+- **Buyer** — a browser page that connects a **Varial wallet**, signs the Soroban
   authorization locally, and retries the call. A reusable browser integration example
   is included too.
 
@@ -26,7 +26,7 @@ Facilitator. It connects to the hosted service through `X402_FACILITATOR_URL`.
 
 - Node.js >= 22
 - Access to the AgentSmith Facilitator (`https://testnet.agentsmith.xyz/facilitator`)
-- A Freighter wallet (browser extension) switched to **Testnet** — the Buyer signs with it
+- A Varial wallet (browser extension) switched to **Testnet** — the Buyer signs with it
 - Testnet USDC in the buyer wallet, from the Circle faucet (below)
 
 The AgentSmith Facilitator sponsors the XLM network fee for every settlement, so the
@@ -64,22 +64,22 @@ Seller integration to read:
   and the Express payment middleware.
 - `src/payments/upto-server.ts` — the `upto` scheme isolated by trust boundary.
 
-## Track 2 — Pay as a Buyer (Freighter wallet)
+## Track 2 — Pay as a Buyer (Varial wallet)
 
-1. Get testnet USDC into Freighter. USDC on Stellar testnet is Circle's asset:
+1. Get testnet USDC into Varial. USDC on Stellar testnet is Circle's asset:
    issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`, code `USDC`.
-   In Freighter (Testnet) add a USDC trustline to that issuer, then fund the address at
+   In Varial (Testnet) add a USDC trustline to that issuer, then fund the address at
    <https://faucet.circle.com> (Stellar -> Testnet).
 2. Open `http://127.0.0.1:8408/wallet-test.html`.
-3. Connect Freighter, set Base URL to `http://127.0.0.1:8408`, choose a scheme
-   (`exact` or `upto`), enter an ICAO code, and Run. Freighter pops up to sign.
+3. Connect Varial, set Base URL to `http://127.0.0.1:8408`, choose a scheme
+   (`exact` or `upto`), enter an ICAO code, and Run. Varial pops up to sign.
 4. On success the page renders the weather and shows the settlement transaction URL on
    stellar.expert (testnet) — the transaction is the on-chain proof.
 
 Buyer integration to read:
 
 - `browser/x402-payment.js` — the reusable browser buyer flow (402 -> sign -> retry).
-- `browser/freighter-signer.js` — adapts Freighter to the signer interface.
+- `browser/varial-signer.js` — adapts Varial to the signer interface.
 - `src/payments/upto-client.ts` — the `upto` client, mirroring the server half.
 
 The files under `browser/` are the maintainable Buyer source. `npm run build:browser`

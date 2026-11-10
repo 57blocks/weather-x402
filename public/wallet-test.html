@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>weather-metar — x402 Freighter test</title>
+<title>weather-metar — x402 Varial test</title>
 <style>
   :root { color-scheme: light; --ink:#111111; --muted:#5c5a50; --soft:#85837a; --line:#e6e4db; --paper:#fbfaf6; --card:#ffffff; --yellow:#fcd636; }
   * { box-sizing: border-box; }
@@ -77,14 +77,14 @@
   <section class="hero">
     <div class="eyebrow">Weather · Stellar testnet</div>
     <h1>Pay for live weather on Stellar.</h1>
-    <p class="lede">Choose <strong>exact</strong> or Kernel-backed <strong>upto</strong>, sign one scoped authorization in Freighter, and receive the Weather API response with its settlement hash.</p>
+    <p class="lede">Choose <strong>exact</strong> or Kernel-backed <strong>upto</strong>, sign one scoped authorization in Varial, and receive the Weather API response with its settlement hash.</p>
   </section>
 
   <section class="grid">
     <div class="card">
       <div class="eyebrow">01 · Configure</div>
       <h2>Weather request</h2>
-      <label class="field" for="baseUrl">Weather API base URL<input id="baseUrl" value="https://agentsmith.xyz/metar"></label>
+      <label class="field" for="baseUrl">Weather API base URL<input id="baseUrl" value="http://127.0.0.1:8408"></label>
       <label class="field" for="rpcUrl">Soroban RPC URL<input id="rpcUrl" value="https://soroban-testnet.stellar.org"></label>
       <label class="field" for="scheme">Payment scheme<select id="scheme"><option value="upto" selected>Upto — authorize maximum, settle usage</option><option value="exact">Exact — settle the fixed price</option></select></label>
       <label class="field" for="icao">ICAO airport code<input id="icao" value="KJFK" maxlength="200"></label>
@@ -92,8 +92,8 @@
 
     <div class="card">
       <div class="eyebrow">02 · Authorize</div>
-      <h2>Freighter session</h2>
-      <div class="actions"><button id="connect">1. Connect Freighter</button><button id="run" disabled>2. Pay &amp; fetch METAR</button></div>
+      <h2>Varial session</h2>
+      <div class="actions"><button id="connect">1. Connect Varial</button><button id="run" disabled>2. Pay &amp; fetch METAR</button></div>
       <div id="status">Not connected.</div>
     </div>
   </section>

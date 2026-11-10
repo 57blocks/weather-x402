@@ -1,9 +1,9 @@
-import { createFreighterSigner } from '../browser/freighter-signer.js';
+import { createVarialSigner } from '../browser/varial-signer.js';
 import { payForResource } from '../browser/x402-payment.js';
 
 /** This is the same exact flow used by public/wallet-test.html. */
-export async function payExactWithFreighter({ url, request, rpcUrl }) {
-  const { signer } = await createFreighterSigner();
+export async function payExactWithVarial({ url, request, rpcUrl }) {
+  const { signer } = await createVarialSigner();
   return payForResource({
     url,
     request,
