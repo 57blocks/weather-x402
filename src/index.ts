@@ -13,6 +13,7 @@ await assertFacilitatorReady(paymentConfig, paymentResourceServer);
 const app = createApp({ paymentConfig, paymentResourceServer });
 const server = app.listen(port, host, () => {
   console.log(`weather-metar listening on http://${host}:${port}`);
+  console.log(`wallet-test page: http://${host}:${port}/wallet-test.html`);
 });
 
 let shuttingDown = false;
