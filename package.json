@@ -19,10 +19,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@x402/core": "^2.23.0",
-    "@x402/express": "^2.23.0",
-    "@x402/extensions": "^2.23.0",
-    "@x402/stellar": "^2.23.0",
+    "@stellar/varial-sdk": "^7.0.0",
+    "@x402/core": "^2.30.0",
+    "@x402/express": "^2.30.0",
+    "@x402/extensions": "^2.30.0",
+    "@x402/stellar": "^2.30.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
@@ -30,7 +31,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@stellar/freighter-api": "^6.0.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",

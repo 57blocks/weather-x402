@@ -33,7 +33,7 @@ describe('HTTP API', () => {
     const response = await request(app).get('/wallet-test.html');
     expect(response.status).toBe(200);
     expect(response.type).toBe('text/html');
-    expect(response.text).toContain('Freighter');
+    expect(response.text).toContain('Varial');
     expect(response.text).toContain('Kernel-backed <strong>upto</strong>');
     expect(response.text).toContain('Payment scheme');
     expect(response.text).toContain('Weather API response');
