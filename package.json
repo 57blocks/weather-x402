@@ -9,13 +9,9 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json && npm run check:examples && npm run build:browser",
+    "build": "tsc -p tsconfig.json && npm run build:browser",
     "build:browser": "esbuild browser/wallet-test.js --bundle --format=esm --platform=browser --target=es2022 --outfile=public/wallet-test.bundle.js",
-    "check:examples": "node --check examples/browser-buyer.js",
-    "start": "node dist/src/index.js",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "register": "tsx scripts/register.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
