@@ -31,7 +31,7 @@ export interface PaymentConfig {
 }
 
 export function paymentConfigFromEnv(
-  enabled = process.env.X402_ENABLED === 'true',
+  enabled = process.env.X402_ENABLED !== 'false',
 ): PaymentConfig {
   const network = process.env.X402_NETWORK || 'stellar:testnet';
   if (!/^[a-z0-9-]+:[A-Za-z0-9-]+$/.test(network)) {
@@ -41,7 +41,7 @@ export function paymentConfigFromEnv(
     throw new Error('X402_NETWORK must be a stellar:* network — this service only speaks the Stellar exact scheme or upto scheme');
   }
 
-  const facilitatorUrl = new URL(process.env.X402_FACILITATOR_URL || 'http://127.0.0.1:8407');
+  const facilitatorUrl = new URL(process.env.X402_FACILITATOR_URL || 'https://testnet.agentsmith.xyz/facilitator');
   const serviceBaseUrl = new URL(process.env.PUBLIC_BASE_URL || 'http://localhost:8408');
   if (enabled && process.env.NODE_ENV === 'production' && serviceBaseUrl.protocol !== 'https:') {
     throw new Error('PUBLIC_BASE_URL must use HTTPS in production');
@@ -55,7 +55,7 @@ export function paymentConfigFromEnv(
     throw new Error('X402_USDC_AMOUNT_ATOMIC must be a positive integer (USDC atomic units)');
   }
 
-  const scheme = process.env.X402_SCHEME?.trim() || 'exact';
+  const scheme = process.env.X402_SCHEME?.trim() || 'both';
   if (!['exact', 'upto', 'both'].includes(scheme)) {
     throw new Error('X402_SCHEME must be exact, upto, or both');
   }
