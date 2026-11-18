@@ -16,6 +16,11 @@ const server = app.listen(port, host, () => {
   console.log(`wallet-test page: http://${host}:${port}/wallet-test.html`);
 });
 
+// The AWS load balancer keeps idle connections for 120 s; closing them first would make it reuse a
+// closed connection (502). headersTimeout must exceed keepAliveTimeout.
+server.keepAliveTimeout = 125_000;
+server.headersTimeout = 126_000;
+
 let shuttingDown = false;
 function shutdown(signal: NodeJS.Signals) {
   if (shuttingDown) return;
