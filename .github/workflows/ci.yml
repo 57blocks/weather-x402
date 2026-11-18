@@ -1,0 +1,200 @@
+name: CI
+
+# Pull requests: typecheck, tests and an image build. A push to main (or a manual run on main) also publishes the
+# image to weather-x402-ecr and deploys it to weather-x402-service (agentsmith-infra weather-x402/), the
+# single internal-only deployment: http://weather-x402.agentsmith.internal:8408.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: verify / typecheck and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          # Matches the Docker base image.
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  docker-build:
+    name: verify / docker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          tags: weather-x402:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # The repository URI is the login's registry plus the repository name, so no secret holds it.
+  publish:
+    name: ship / publish image
+    needs: [check, docker-build]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: weather-x402-publish
+      cancel-in-progress: false
+    env:
+      ECR_REPOSITORY: weather-x402-ecr
+    outputs:
+      image: ${{ steps.digest.outputs.image }}
+      image_tag: ${{ steps.image.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - id: image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          echo "repository=$REGISTRY/$ECR_REPOSITORY" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          # agentsmith-infra runs the task on X86_64.
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.image.outputs.repository }}:${{ steps.image.outputs.short_sha }}
+            ${{ steps.image.outputs.repository }}:latest
+          provenance: false
+          cache-from: type=gha
+      # The tags are mutable; the task definition is pinned to the digest.
+      - id: digest
+        env:
+          REPOSITORY: ${{ steps.image.outputs.repository }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          if [[ ! "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::unexpected image digest: $DIGEST"
+            exit 1
+          fi
+          echo "image=$REPOSITORY@$DIGEST" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: ship / deploy
+    needs: [publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: weather-x402-deploy
+      cancel-in-progress: false
+    env:
+      IMAGE: ${{ needs.publish.outputs.image }}
+      IMAGE_TAG: ${{ needs.publish.outputs.image_tag }}
+      ECS_CLUSTER: weather-x402-cluster
+      ECS_SERVICE: weather-x402-service
+      TASK_FAMILY: weather-x402-task
+      ECS_CONTAINER: weather-x402
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+      # Copies the family's newest revision, so settings applied by Terraform (command, secret, roles) are
+      # kept, and pins the image.
+      - name: Register task definition
+        id: register
+        run: |
+          if ! aws ecs describe-task-definition --task-definition "$TASK_FAMILY" --include TAGS \
+            --output json > "$RUNNER_TEMP/current.json"; then
+            echo "::error::task definition family $TASK_FAMILY does not exist; apply agentsmith-infra weather-x402/environments/global first"
+            exit 1
+          fi
+          jq --arg container "$ECS_CONTAINER" --arg image "$IMAGE" '
+            (.tags // []) as $tags
+            | .taskDefinition
+            | if any(.containerDefinitions[]; .name == $container) then . else error("no container " + $container) end
+            | .containerDefinitions |= map(if .name == $container then .image = $image else . end)
+            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities,
+                  .registeredAt, .registeredBy, .deregisteredAt)
+            | if ($tags | length) > 0 then .tags = $tags else . end' "$RUNNER_TEMP/current.json" > "$RUNNER_TEMP/next.json"
+          arn=$(aws ecs register-task-definition --cli-input-json "file://$RUNNER_TEMP/next.json" \
+            --query taskDefinition.taskDefinitionArn --output text)
+          echo "Registered $arn"
+          echo "arn=$arn" >> "$GITHUB_OUTPUT"
+      # One task: Terraform creates the service with desired count 0 and ignores the count afterwards.
+      - name: Update service
+        id: deploy
+        env:
+          TASK_DEFINITION: ${{ steps.register.outputs.arn }}
+        run: |
+          id=$(aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
+            --task-definition "$TASK_DEFINITION" --desired-count 1 \
+            --query "service.deployments[?status=='PRIMARY'].id | [0]" --output text)
+          if [[ -z "$id" || "$id" == "None" ]]; then
+            echo "::error::update-service returned no primary deployment"
+            exit 1
+          fi
+          echo "Started deployment $id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+      # The circuit breaker rolls a failed rollout back, so watch this deployment's own rolloutState.
+      - name: Wait for rollout
+        env:
+          DEPLOYMENT: ${{ steps.deploy.outputs.id }}
+        run: |
+          while true; do
+            state=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+              --query "services[0].deployments[?id=='$DEPLOYMENT'].rolloutState | [0]" --output text)
+            case "$state" in
+              COMPLETED)
+                echo "Deployment $DEPLOYMENT completed"
+                break
+                ;;
+              FAILED)
+                reason=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+                  --query "services[0].deployments[?id=='$DEPLOYMENT'].rolloutStateReason | [0]" --output text)
+                echo "::error::deployment $DEPLOYMENT failed and ECS rolls it back: $reason"
+                exit 1
+                ;;
+              None | "")
+                echo "::error::deployment $DEPLOYMENT is no longer on the service; it was rolled back or replaced"
+                exit 1
+                ;;
+              *)
+                echo "Deployment $DEPLOYMENT is $state"
+                sleep 15
+                ;;
+            esac
+          done
+          {
+            echo "### weather-x402 deployed"
+            echo
+            echo "- Image: \`$IMAGE_TAG\` (\`$IMAGE\`)"
+            echo "- Service: \`$ECS_SERVICE\` on \`$ECS_CLUSTER\`"
+            echo "- Internal URL: http://weather-x402.agentsmith.internal:8408"
+          } >> "$GITHUB_STEP_SUMMARY"
